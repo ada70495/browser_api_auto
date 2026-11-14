@@ -1,0 +1,48 @@
+# ============================================
+# 浏览器接口自动化 - 环境编排
+#   1. browser-api：本地被测服务（Flask，9200）
+#   2. api-test：执行 pytest 用例
+#
+# 用法：
+#   docker compose up -d browser-api
+#   docker compose run --rm api-test
+#   docker compose down
+# ============================================
+
+services:
+  browser-api:
+    image: python:3.11-slim
+    container_name: mock-browser-api
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "pip install -q -i https://pypi.tuna.tsinghua.edu.cn/simple flask
+             && python mock_server/app.py"
+    environment:
+      PORT: "9200"
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:9200/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api-test:
+    image: python:3.11-slim
+    container_name: browser-api-test
+    working_dir: /app
+    volumes:
+      - ./:/app
+    depends_on:
+      browser-api:
+        condition: service_healthy
+    environment:
+      ENV: "ci"
+      BASE_URL: "http://browser-api:9200/api/v1"
+    command: >
+      sh -c "pip install -q -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+             && python -m pytest -p no:cacheprovider --no-cov"
+    profiles: ["test"]

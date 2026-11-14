@@ -1,18 +1,24 @@
-# 本地私密账号密钥文件，绝对禁止上传github
+# 本地私密账号密钥文件，禁止上传
 .env
-# 日志文件夹
+
+# 运行产物：日志、报告、覆盖率数据
 logs/
-# allure报告原始数据和最终html
-reports/allure_raw/
-reports/allure_html/
-# python编译缓存文件
+reports/
+.coverage
+coverage.xml
+.pytest_cache/
+
+# Python 编译缓存
 __pycache__/
 *.pyc
 *.pyo
+
 # 系统隐藏文件
 .DS_Store
 Thumbs.db
-# 编辑器配置文件
+
+# 编辑器配置
 .idea/
 .vscode/
 *.swp
+*.log

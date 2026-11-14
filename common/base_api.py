@@ -1,57 +1,54 @@
 import requests
-from config.settings import BASE_URL, TIMEOUT, GLOBAL_HEADERS, TOKEN
-from common.logger import log
+
 from common.allure_attach import attach_request, attach_response
+from common.logger import log
+from config import settings
 
 
 class BaseApi:
     def __init__(self):
-        # 使用session保持会话，自动维持cookie，长连接复用
+        # 使用 session 保持会话，自动维持 cookie、复用长连接
         self.session = requests.Session()
 
     def send_request(self, path, method, json_data=None, params=None, headers=None):
-        """
-        统一接口请求入口
-        :param path: 接口后缀路径 /user/login
-        :param method: 请求方式 GET/POST/PUT/DELETE
-        :param json_data: post请求json入参
-        :param params: get请求url参数
-        :param headers: 自定义额外请求头
-        :return: requests响应对象
-        """
-        # 拼接完整接口地址
-        url = f"{BASE_URL}{path}"
-        # 拷贝全局请求头，避免原字典被修改
-        headers_all = GLOBAL_HEADERS.copy()
+        """统一接口请求入口
 
-        # 如果全局有token，自动加入鉴权头
-        if TOKEN:
-            headers_all["Authorization"] = f"Bearer {TOKEN}"
-        # 合并自定义请求头
+        :param path: 接口路径，如 /user/login
+        :param method: GET / POST / PUT / DELETE
+        :param json_data: POST 等请求的 json 入参
+        :param params: GET 的 url 参数
+        :param headers: 额外请求头
+        """
+        url = f"{settings.BASE_URL}{path}"
+        headers_all = dict(settings.GLOBAL_HEADERS)
+
+        # 从 settings 实时读取 token（不能用 import 的值拷贝，否则永远是空串）
+        token = settings.get_token()
+        if token:
+            headers_all["Authorization"] = f"Bearer {token}"
         if headers:
             headers_all.update(headers)
 
-        log.info(f"【{method.upper()}】请求地址：{url}")
-        log.info(f"params参数：{params} | json参数：{json_data}")
-        # 请求信息写入allure报告
+        log.info(f"【{method.upper()}】{url} | params={params} | json={json_data}")
         attach_request(url, method, headers_all, json_data)
 
+        timeout = settings.TIMEOUT
         try:
-            # 分发不同请求方式
-            if method.upper() == "GET":
-                resp = self.session.get(url, headers=headers_all, params=params, timeout=TIMEOUT)
-            elif method.upper() == "POST":
-                resp = self.session.post(url, headers=headers_all, json=json_data, timeout=TIMEOUT)
-            elif method.upper() == "PUT":
-                resp = self.session.put(url, headers=headers_all, json=json_data, timeout=TIMEOUT)
-            elif method.upper() == "DELETE":
-                resp = self.session.delete(url, headers=headers_all, json=json_data, timeout=TIMEOUT)
+            method_upper = method.upper()
+            if method_upper == "GET":
+                resp = self.session.get(url, headers=headers_all, params=params, timeout=timeout)
+            elif method_upper == "POST":
+                resp = self.session.post(url, headers=headers_all, json=json_data, timeout=timeout)
+            elif method_upper == "PUT":
+                resp = self.session.put(url, headers=headers_all, json=json_data, timeout=timeout)
+            elif method_upper == "DELETE":
+                resp = self.session.delete(url, headers=headers_all, json=json_data, timeout=timeout)
             else:
-                raise Exception(f"当前框架不支持该请求方式：{method}")
+                raise ValueError(f"框架不支持的请求方式：{method}")
 
-            log.info(f"接口响应状态码：{resp.status_code}")
+            log.info(f"响应状态码：{resp.status_code} | 内容：{resp.text[:300]}")
             attach_response(resp)
             return resp
         except Exception as e:
-            log.error(f"接口请求出现异常：{str(e)}")
+            log.error(f"接口请求异常：{e}")
             raise

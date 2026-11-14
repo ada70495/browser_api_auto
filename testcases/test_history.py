@@ -16,7 +16,9 @@ class TestHistoryApi:
     @pytest.mark.parametrize("case", history_data)
     def test_add_history(self, case):
         history = HistoryPage()
-        resp = history.add_history(title=case["title"], url=case["url"], visit_time=case["visit_time"])
+        resp = history.add_history(
+            title=case["title_name"], url=case["url"], visit_time=case["visit_time"]
+        )
         res_json = resp.json()
         assert_status_code(resp)
         assert_msg_contain(res_json, case["expect_msg"])

@@ -1,0 +1,59 @@
+# ============ DJ 音乐播放器模块用例数据 ============
+
+dj_playlist_cases:
+  - case_id: dj_001
+    title: 查询歌单返回全部歌曲
+    expect_msg: 查询成功
+    expect_total: 3
+
+dj_play_cases:
+  - case_id: dj_002
+    title: 播放存在的歌曲
+    song_id: 2
+    expect_msg: 开始播放
+  - case_id: dj_003
+    title: 播放不存在的歌曲，返回404
+    song_id: 999
+    expect_msg: 歌曲不存在
+
+dj_volume_cases:
+  - case_id: dj_004
+    title: 音量设置为60
+    volume: 60
+    expect_msg: 音量设置成功
+  - case_id: dj_005
+    title: 音量设置为0（边界值）
+    volume: 0
+    expect_msg: 音量设置成功
+  - case_id: dj_006
+    title: 音量101超出上限，参数校验拦截
+    volume: 101
+    expect_msg: 音量必须在
+  - case_id: dj_007
+    title: 音量-1低于下限，参数校验拦截
+    volume: -1
+    expect_msg: 音量必须在
+
+dj_eq_cases:
+  - case_id: dj_008
+    title: 切换摇滚均衡器
+    mode: rock
+    expect_msg: 均衡器设置成功
+  - case_id: dj_009
+    title: 均衡器模式非法，参数校验拦截
+    mode: pop
+    expect_msg: 均衡器模式仅支持
+
+dj_play_mode_cases:
+  - case_id: dj_010
+    title: 切换列表循环播放
+    mode: loop
+    expect_msg: 播放模式设置成功
+  - case_id: dj_011
+    title: 切换随机播放
+    mode: random
+    expect_msg: 播放模式设置成功
+  - case_id: dj_012
+    title: 播放模式非法，参数校验拦截
+    mode: shuffle
+    expect_msg: 播放模式仅支持
