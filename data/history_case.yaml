@@ -20,3 +20,10 @@ add_history_cases:
     url: https://www.bilibili.com
     visit_time: ""
     expect_msg: "访问时间不能为空"
+
+  - case_id: history_004
+    title: 标题为空，参数校验失败
+    title_name: ""
+    url: https://www.bilibili.com
+    visit_time: "2026-07-22 12:00:00"
+    expect_msg: "历史标题不能为空"

@@ -4,8 +4,21 @@ add_bookmark_cases:
     title_name: 百度搜索
     url: https://www.baidu.com
     expect_msg: 收藏添加成功
+
   - case_id: bookmark_002
     title: URL为空，新增收藏失败
     title_name: 空链接
     url: ""
     expect_msg: 链接地址不能为空
+
+  - case_id: bookmark_003
+    title: 链接缺少协议头，参数校验拦截
+    title_name: 格式错误
+    url: www.baidu.com
+    expect_msg: 链接格式不正确
+
+  - case_id: bookmark_004
+    title: 标题为空，参数校验拦截
+    title_name: ""
+    url: https://www.baidu.com
+    expect_msg: 标题不能为空

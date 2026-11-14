@@ -1,13 +1,10 @@
-"""本地被测服务：移动端浏览器接口
+"""本地被测服务：浏览器后台接口
 
-覆盖 登录 / 收藏夹 / 浏览历史 / 缓存与无痕 / DJ 音乐播放器，
-替代原来指向脱敏域名的测试环境，让 POM 用例可以真实跑通。
-
+接口前缀 /api/v1，与 config/env.yaml 里的 base_url 对应。
 启动：
-    python mock_server/app.py            # 默认 9200 端口
-    $env:PORT=9201; python mock_server/app.py
 
-所有业务接口前缀：/api/v1（与 config/env.yaml 的 base_url 对应）
+    python mock_server/app.py             # 默认 9200 端口
+    $env:PORT=9201; python mock_server/app.py
 """
 import os
 
@@ -20,14 +17,6 @@ PREFIX = "/api/v1"
 TOKEN = "mock-token-browser-2026"
 
 CACHE_TYPES = {"all", "image", "cookie"}
-EQ_MODES = {"normal", "rock", "jazz", "vocal"}
-PLAY_MODES = {"sequence", "loop", "single", "random"}
-
-SONGS = [
-    {"song_id": 1, "name": "夜航", "artist": "Mock Band", "duration": 214},
-    {"song_id": 2, "name": "霓虹", "artist": "Mock Band", "duration": 188},
-    {"song_id": 3, "name": "晚风", "artist": "Mock Band", "duration": 240},
-]
 
 
 def init_state():
@@ -37,7 +26,6 @@ def init_state():
         "history": [],
         "cache": {},
         "incognito": False,
-        "dj": {"volume": 50, "eq": "normal", "play_mode": "sequence", "playing": None},
     }
 
 
@@ -106,7 +94,10 @@ def bookmark_add():
 
 @app.get(PREFIX + "/bookmark/list")
 def bookmark_list():
+    keyword = (request.args.get("keyword") or "").strip()
     items = list(STATE["bookmarks"].values())
+    if keyword:
+        items = [i for i in items if keyword in i["title"] or keyword in i["url"]]
     return ok({"total": len(items), "list": items}, "查询成功")
 
 
@@ -137,6 +128,11 @@ def history_add():
     return ok({"total": len(STATE["history"])}, "记录保存成功")
 
 
+@app.get(PREFIX + "/history/list")
+def history_list():
+    return ok({"total": len(STATE["history"]), "list": STATE["history"]}, "查询成功")
+
+
 @app.post(PREFIX + "/history/clear")
 def history_clear():
     cleared = len(STATE["history"])
@@ -163,53 +159,6 @@ def incognito_switch():
         return fail(400, "open 必须为布尔值")
     STATE["incognito"] = status
     return ok({"open": status}, "无痕模式已开启" if status else "无痕模式已关闭")
-
-
-# ---------------- DJ 音乐播放器 ----------------
-@app.get(PREFIX + "/dj/playlist")
-def dj_playlist():
-    return ok({"total": len(SONGS), "list": SONGS}, "查询成功")
-
-
-@app.post(PREFIX + "/dj/play")
-def dj_play():
-    data = body()
-    song_id = data.get("song_id")
-    song = next((s for s in SONGS if s["song_id"] == song_id), None)
-    if song is None:
-        return fail(404, "歌曲不存在")
-    STATE["dj"]["playing"] = song_id
-    return ok({"song_id": song_id, "playing": True, "duration": song["duration"]}, "开始播放")
-
-
-@app.post(PREFIX + "/dj/volume")
-def dj_volume():
-    data = body()
-    volume = data.get("volume")
-    if not isinstance(volume, int) or isinstance(volume, bool) or not (0 <= volume <= 100):
-        return fail(400, "音量必须在 0-100 之间")
-    STATE["dj"]["volume"] = volume
-    return ok({"volume": volume}, "音量设置成功")
-
-
-@app.post(PREFIX + "/dj/eq")
-def dj_eq():
-    data = body()
-    mode = data.get("mode")
-    if mode not in EQ_MODES:
-        return fail(400, "均衡器模式仅支持 normal/rock/jazz/vocal")
-    STATE["dj"]["eq"] = mode
-    return ok({"mode": mode}, "均衡器设置成功")
-
-
-@app.post(PREFIX + "/dj/play_mode")
-def dj_play_mode():
-    data = body()
-    mode = data.get("mode")
-    if mode not in PLAY_MODES:
-        return fail(400, "播放模式仅支持 sequence/loop/single/random")
-    STATE["dj"]["play_mode"] = mode
-    return ok({"mode": mode}, "播放模式设置成功")
 
 
 if __name__ == "__main__":

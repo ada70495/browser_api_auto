@@ -3,7 +3,7 @@ from utils.file_path import LOG_PATH
 import os
 
 # 拼接日志文件完整路径
-log_file = os.path.join(LOG_PATH, "browser_api_test.log")
+log_file = os.path.join(LOG_PATH, "browser_api_auto.log")
 
 # 日志配置：文件分割、过期清理、编码、多线程安全、日志格式
 logger.add(
