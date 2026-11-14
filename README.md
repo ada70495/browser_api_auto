@@ -2,6 +2,7 @@
 
 浏览器后台接口的自动化测试工程，按 POM（Page Object Model）分层，负责接口请求与断言，
 覆盖登录、收藏夹、浏览历史、缓存与无痕模式、DJ 音乐播放器五块业务。
+技术栈：Python 3.13 + requests + pytest + PyYAML + Allure + loguru，被测服务用 Flask 起在本地。
 
 被测服务是仓库里的一个 Flask 应用（`mock_server/app.py`），13 个业务接口，
 路径统一在 `/api/v1` 前缀下。当前用例 27 条，框架代码覆盖率 84%。
