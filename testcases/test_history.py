@@ -56,3 +56,23 @@ class TestHistoryApi:
         # 清空后再次查询，列表应为空
         after = history.get_history_list().json()
         assert get_value(after, "data.total") == 0, "清空后历史记录总数应为 0"
+
+    @allure.story("多条记录按访问时间追加")
+    def test_history_records_order(self):
+        history = HistoryPage()
+        before_total = get_value(history.get_history_list().json(), "data.total")
+
+        records = [
+            ("顺序校验一", "https://www.example.com/a", "2026-11-21 09:00:00"),
+            ("顺序校验二", "https://www.example.com/b", "2026-11-21 10:00:00"),
+            ("顺序校验三", "https://www.example.com/c", "2026-11-21 11:00:00"),
+        ]
+        for title, url, visit_time in records:
+            assert_status_code(history.add_history(title, url, visit_time))
+
+        res_json = history.get_history_list().json()
+        assert_status_code(history.get_history_list())
+        assert get_value(res_json, "data.total") == before_total + len(records), "总数应按新增条数递增"
+
+        tail = [item["title"] for item in get_value(res_json, "data.list")][-len(records):]
+        assert tail == [r[0] for r in records], "列表尾部顺序应与添加顺序一致"

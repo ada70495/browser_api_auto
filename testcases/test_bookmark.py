@@ -77,3 +77,16 @@ class TestBookmarkApi:
         remain = bookmark.get_bookmark_list().json()
         ids = [item["bookmark_id"] for item in get_value(remain, "data.list")]
         assert bookmark_id not in ids, "删除后列表中不应再有该收藏"
+
+    @allure.story("关键字无命中时返回空列表")
+    def test_search_bookmark_no_match(self):
+        bookmark = BookmarkPage()
+        bookmark.add_bookmark("无命中对照", "https://www.example.com").json()
+
+        resp = bookmark.get_bookmark_list(keyword="no_such_keyword_9f2c")
+        res_json = resp.json()
+
+        assert_status_code(resp)
+        assert_msg_contain(res_json, "查询成功")
+        assert get_value(res_json, "data.total") == 0, "无命中时总数应为 0"
+        assert get_value(res_json, "data.list") == [], "无命中时列表应为空数组"
